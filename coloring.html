@@ -96,13 +96,13 @@
         CANVAS_ID = 'coloring_picture';
         CANVAS_IMAGE_PADDING = 3;
 
-        function loadImageToBuffer() {
-            var img_src = 'images/Соты 6.JPG';
-            var image = document.getElementById(IMG_BUFFER_ID);
-            image.src = img_src;
+        function paintOverArea(event) {
+            var canvas = document.getElementById(CANVAS_ID);
+            var mousePosition = [event.pageY - canvas.offsetTop, event.pageX - canvas.offsetLeft];
+            new AreaPainterOver(mousePosition, canvas, [255, 0, 0, 255]).paintOver();
         }
 
-        function drawImageFromBuffer() {
+        function loadImageToCanvas() {
             var c = document.getElementById(CANVAS_ID);
             var ctx = c.getContext("2d");
             var img = document.getElementById(IMG_BUFFER_ID);
@@ -110,30 +110,11 @@
             c.width = img.width + 2 * CANVAS_IMAGE_PADDING;
             ctx.drawImage(img, CANVAS_IMAGE_PADDING, CANVAS_IMAGE_PADDING);
         }
-
-        function loadImage() {
-            loadImageToBuffer();
-            drawImageFromBuffer();
-        }
-
-        function paintOverSmth() {
-            var c = document.getElementById(CANVAS_ID);
-            var ctx = c.getContext("2d");
-//            new AreaPainterOver([1, 1], c, [255, 0, 0, 255]).paintOver();
-            new AreaPainterOver([200, 200], c, [255, 0, 0, 255]).paintOver();
-            new AreaPainterOver([100, 100], c, [255, 0, 0, 255]).paintOver();
-            new AreaPainterOver([100, 100], c, [255, 255, 0, 255]).paintOver();
-            new AreaPainterOver([200, 100], c, [0, 255, 0, 255]).paintOver();
-            new AreaPainterOver([100, 400], c, [0, 0, 255, 255]).paintOver();
-//            new AreaPainterOver([700, 700], c, [0, 0, 255, 255]).paintOver();
-        }
     </script>
 </head>
 <body>
-    <button onclick="loadImage();">Нарисовать картинку</button>
-    <button onclick="paintOverSmth();">Закрасить что-нибудь</button>
     <br/>
-    <canvas id="coloring_picture" width="200" height="100"></canvas>
-    <img id="img_buffer" src=""/>
+    <canvas id="coloring_picture" width="200" height="100" onmousedown="paintOverArea(event)"></canvas>
+    <img id="img_buffer" src="images/Соты 6.JPG" onload="loadImageToCanvas()"/>
 </body>
 </html>
