@@ -4,11 +4,31 @@
     <meta charset="UTF-8">
     <title>Coloring</title>
     <style>
+        #main_page {
+            width: 1000px;
+            margin: 0 auto;
+        }
         #coloring_picture {
             border: 1px solid;
         }
         #img_buffer {
             display: none;
+        }
+        .palette_element {
+            height: 20px;
+            width: 20px;
+        }
+        .white {
+            background-color: rgba(255, 255, 255, 255);
+        }
+        .red {
+            background-color: rgba(255, 0, 0, 255);
+        }
+        .green {
+            background-color: rgba(0, 255, 0, 255);
+        }
+        .blue {
+            background-color: rgba(0, 0, 255, 255);
         }
     </style>
     <script about="magic numbers">
@@ -97,12 +117,14 @@
         CANVAS_IMAGE_PADDING = 3;
         LEFT_MOUSE_KEY_CODE = 1;
 
+        var currentColor = [255, 255, 255, 255];
+
         function paintOverArea(event) {
             if (event.which != LEFT_MOUSE_KEY_CODE)
                     return;
             var canvas = document.getElementById(CANVAS_ID);
             var mousePosition = [event.pageY - canvas.offsetTop, event.pageX - canvas.offsetLeft];
-            new AreaPainterOver(mousePosition, canvas, [255, 0, 0, 255]).paintOver();
+            new AreaPainterOver(mousePosition, canvas, currentColor).paintOver();
         }
 
         function loadImageToCanvas() {
@@ -113,10 +135,35 @@
             canvas.width = imageBufferElement.width + 2 * CANVAS_IMAGE_PADDING;
             canvasContext.drawImage(imageBufferElement, CANVAS_IMAGE_PADDING, CANVAS_IMAGE_PADDING);
         }
+
+        function getRGBAArrayFromRGBString(RGBString) {
+            var parts = RGBString.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            var color = [];
+            for (var i = 1; i <= 3; ++i)
+                color.push(parseInt(parts[i]));
+            color.push(255);
+            return color;
+        }
+
+        function changeColor(paletteElement) {
+            currentColor = getRGBAArrayFromRGBString(window.getComputedStyle(paletteElement).backgroundColor);
+        }
     </script>
 </head>
-<body>
-    <canvas id="coloring_picture" width="200" height="100" onmousedown="paintOverArea(event)"></canvas>
-    <img id="img_buffer" src="images/Соты 6.JPG" onload="loadImageToCanvas()"/>
+<body onkeyup="changeColor(event)">
+    <div id="main_page">
+        <canvas id="coloring_picture" width="200" height="100" onmousedown="paintOverArea(event)"></canvas>
+        <img id="img_buffer" src="images/Соты 6.JPG" onload="loadImageToCanvas()"/>
+        <br/>
+        <br/>
+        <table border="1px">
+            <tr>
+                <td><div class="palette_element white" onmousedown="changeColor(this)"></div></td>
+                <td><div class="palette_element red" onmousedown="changeColor(this)"></div></td>
+                <td><div class="palette_element green" onmousedown="changeColor(this)"></div></td>
+                <td><div class="palette_element blue" onmousedown="changeColor(this)"></div></td>
+            </tr>
+        </table>
+    </div>
 </body>
 </html>
