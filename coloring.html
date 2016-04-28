@@ -19,9 +19,9 @@
             return true;
         }
 
-        function CanvasPixelField(canvasContext) {
-            this.height = canvasContext.height;
-            this.width = canvasContext.width;
+        function CanvasPixelField(canvasContext, height, width) {
+            this.height = height;
+            this.width = width;
             this.pixelsData = canvasContext.getImageData(
                     0, 0, this.width, this.height);
 
@@ -29,43 +29,43 @@
                 return (this.width * pixelPosition[0] + pixelPosition[1]) * 4;
             };
 
-            this.getPixel = function (pixelPosition) {
+            this.getPixelColor = function (pixelPosition) {
                 var startIndex = this._getPixelStartIndex(pixelPosition);
-                return this.pixelsData.slice(startIndex, startIndex + 4);
+                return this.pixelsData.data.slice(startIndex, startIndex + 4);
             };
 
-            this.setPixel = function (pixelPosition, pixelColor) {
+            this.setPixelColor = function (pixelPosition, pixelColor) {
                 var startIndex = this._getPixelStartIndex(pixelPosition);
                 for (var idx = 0; idx < 4; idx++)
-                    this.pixelsData[startIndex + idx] = pixelColor[idx];
+                    this.pixelsData.data[startIndex + idx] = pixelColor[idx];
             };
         }
 
-        function AreaPainterOver(pixelPosition, canvasContext, newColor) {
-        /* Algorithm source:
-           http://www.websketches.ru/blog/raskrshivaem-kartinki-html5-canvas-javascript
-        */
-            this.canvasContext = canvasContext;
-            this.pixelField = new CanvasPixelField(this.canvasContext);
-            this.pixelStack = [pixelPosition];
+        function AreaPainterOver(pixelPosition, canvas, newColor) {
+            this._canvas = canvas;
+            this._canvasContext = this._canvas.getContext('2d');
+            this._pixelField = new CanvasPixelField(this._canvasContext, this._canvas.height, this._canvas.width);
+            this._previousColor = this._pixelField.getPixelColor(pixelPosition);
+            this._newColor = newColor;
+            this._startPixelPosition = pixelPosition;
 
             this.paintOver = function () {
-                while (this.pixelStack.length) {
-                    var pixelPosition = this.pixelStack.pop();
-                    pixelPosition = this._goUp(pixelPosition);
-                    this._goDown(pixelPosition);
-                }
+                this._paintOverPixel(this._startPixelPosition);
                 this._redrawCanvas();
             };
 
+            this._paintOverPixel = function (pixelPosition) {
+                var pixelColor = this._pixelField.getPixelColor(pixelPosition);
+                if (pixelColorsEquals(pixelColor, this._previousColor)) {
+                    this._pixelField.setPixelColor(pixelPosition, this._newColor);
+                    this._paintOverPixel([pixelPosition[0] + 1, pixelPosition[1]]);
+                    this._paintOverPixel([pixelPosition[0] - 1, pixelPosition[1]]);
+                    this._paintOverPixel([pixelPosition[0], pixelPosition[1] + 1]);
+                    this._paintOverPixel([pixelPosition[0], pixelPosition[1] - 1]);
+                }
+            };
             this._redrawCanvas = function () {
-
-            };
-            this._goUp = function (pixelPosition) {
-
-            };
-            this._goDown = function (pixelPosition) {
-
+                this._canvasContext.putImageData(this._pixelField.pixelsData, 0, 0);
             };
         }
     </script>
@@ -74,27 +74,35 @@
         CANVAS_ID = 'coloring_picture';
         CANVAS_IMAGE_PADDING = 3;
 
-        function load_image_to_buffer() {
+        function loadImageToBuffer() {
             var img_src = 'images/Соты 6.JPG';
             var image = document.getElementById(IMG_BUFFER_ID);
             image.src = img_src;
         }
-        function draw_image_from_buffer() {
-            var c=document.getElementById(CANVAS_ID);
-            var ctx=c.getContext("2d");
-            var img=document.getElementById(IMG_BUFFER_ID);
+        function drawImageFromBuffer() {
+            var c = document.getElementById(CANVAS_ID);
+            var ctx = c.getContext("2d");
+            var img = document.getElementById(IMG_BUFFER_ID);
             c.height = img.height + 2 * CANVAS_IMAGE_PADDING;
             c.width = img.width + 2 * CANVAS_IMAGE_PADDING;
             ctx.drawImage(img, CANVAS_IMAGE_PADDING, CANVAS_IMAGE_PADDING);
         }
-        function load_image() {
-            load_image_to_buffer();
-            draw_image_from_buffer();
+        function loadImage() {
+            loadImageToBuffer();
+            drawImageFromBuffer();
+        }
+        function paintOverSmth() {
+            var c = document.getElementById(CANVAS_ID);
+            var ctx = c.getContext("2d");
+            new AreaPainterOver([100, 100], c, [255, 0, 0, 255]).paintOver();
+//            new AreaPainterOver([300, 300], c, [0, 255, 0, 255]).paintOver();
+//            new AreaPainterOver([700, 700], c, [0, 0, 255, 255]).paintOver();
         }
     </script>
 </head>
 <body>
-    <button onclick="load_image();">Нарисовать картинку</button>
+    <button onclick="loadImage();">Нарисовать картинку</button>
+    <button onclick="paintOverSmth();">Закрасить что-нибудь</button>
     <br/>
     <canvas id="coloring_picture" width="200" height="100"></canvas>
     <img id="img_buffer" src=""/>
