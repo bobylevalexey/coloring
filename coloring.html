@@ -95,20 +95,23 @@
         IMG_BUFFER_ID = 'img_buffer';
         CANVAS_ID = 'coloring_picture';
         CANVAS_IMAGE_PADDING = 3;
+        LEFT_MOUSE_KEY_CODE = 1;
 
         function paintOverArea(event) {
+            if (event.which != LEFT_MOUSE_KEY_CODE)
+                    return;
             var canvas = document.getElementById(CANVAS_ID);
             var mousePosition = [event.pageY - canvas.offsetTop, event.pageX - canvas.offsetLeft];
             new AreaPainterOver(mousePosition, canvas, [255, 0, 0, 255]).paintOver();
         }
 
         function loadImageToCanvas() {
-            var c = document.getElementById(CANVAS_ID);
-            var ctx = c.getContext("2d");
-            var img = document.getElementById(IMG_BUFFER_ID);
-            c.height = img.height + 2 * CANVAS_IMAGE_PADDING;
-            c.width = img.width + 2 * CANVAS_IMAGE_PADDING;
-            ctx.drawImage(img, CANVAS_IMAGE_PADDING, CANVAS_IMAGE_PADDING);
+            var canvas = document.getElementById(CANVAS_ID);
+            var canvasContext = canvas.getContext("2d");
+            var imageBufferElement = document.getElementById(IMG_BUFFER_ID);
+            canvas.height = imageBufferElement.height + 2 * CANVAS_IMAGE_PADDING;
+            canvas.width = imageBufferElement.width + 2 * CANVAS_IMAGE_PADDING;
+            canvasContext.drawImage(imageBufferElement, CANVAS_IMAGE_PADDING, CANVAS_IMAGE_PADDING);
         }
     </script>
 </head>
