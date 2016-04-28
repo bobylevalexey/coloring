@@ -11,7 +11,30 @@
             display: none;
         }
     </style>
-    <script>
+    <script about="magic numbers">
+        MAX_PIXELS_SIMILARITY = 10000
+    </script>
+    <script about="lib">
+        /* colors distance formula:
+        http://stackoverflow.com/questions/4754506/color-similarity-distance-in-rgba-color-space */
+        function getPixelColorsSimilarity(pixelColor1, pixelColor2) {
+            var r1 = pixelColor1[0], g1 = pixelColor1[1], b1 = pixelColor1[2], a1 = pixelColor1[3];
+            var r2 = pixelColor2[0], g2 = pixelColor2[1], b2 = pixelColor2[2], a2 = pixelColor2[3];
+            var alphaDif = a1 - a2;
+            function colorDif(color1, color2) {
+                var colorDif = color1 - color2;
+                return Math.max(Math.pow(colorDif, 2), Math.pow(colorDif - alphaDif, 2));
+            }
+            return colorDif(r1, r2) + colorDif(g1, g2) + colorDif(b1, b2);
+        }
+
+        function pixelColorsSimilar(pixelColor1, pixelColor2) {
+            var sim = getPixelColorsSimilarity(pixelColor1, pixelColor2);
+            if (sim < 100000 && sim > MAX_PIXELS_SIMILARITY)
+                console.log(sim);
+            return getPixelColorsSimilarity(pixelColor1, pixelColor2) < MAX_PIXELS_SIMILARITY;
+        }
+
         function pixelColorsEquals(pixelColor1, pixelColor2) {
             for (var idx = 0; idx < 4; idx++)
                 if (pixelColor1[idx] != pixelColor2[idx])
@@ -47,29 +70,31 @@
             this._pixelField = new CanvasPixelField(this._canvasContext, this._canvas.height, this._canvas.width);
             this._previousColor = this._pixelField.getPixelColor(pixelPosition);
             this._newColor = newColor;
-            this._startPixelPosition = pixelPosition;
+            this._pixelsStack = [pixelPosition];
 
             this.paintOver = function () {
-                this._paintOverPixel(this._startPixelPosition);
+                if (pixelColorsSimilar(this._previousColor, this._newColor))
+                    return;
+                while (this._pixelsStack.length) {
+                    var pixelPosition = this._pixelsStack.pop();
+                    var pixelColor = this._pixelField.getPixelColor(pixelPosition);
+                    if (pixelColorsSimilar(pixelColor, this._previousColor)) {
+                        this._pixelField.setPixelColor(pixelPosition, this._newColor);
+                        this._pixelsStack.push([pixelPosition[0] + 1, pixelPosition[1]]);
+                        this._pixelsStack.push([pixelPosition[0] - 1, pixelPosition[1]]);
+                        this._pixelsStack.push([pixelPosition[0], pixelPosition[1] + 1]);
+                        this._pixelsStack.push([pixelPosition[0], pixelPosition[1] - 1]);
+                    }
+                }
                 this._redrawCanvas();
             };
 
-            this._paintOverPixel = function (pixelPosition) {
-                var pixelColor = this._pixelField.getPixelColor(pixelPosition);
-                if (pixelColorsEquals(pixelColor, this._previousColor)) {
-                    this._pixelField.setPixelColor(pixelPosition, this._newColor);
-                    this._paintOverPixel([pixelPosition[0] + 1, pixelPosition[1]]);
-                    this._paintOverPixel([pixelPosition[0] - 1, pixelPosition[1]]);
-                    this._paintOverPixel([pixelPosition[0], pixelPosition[1] + 1]);
-                    this._paintOverPixel([pixelPosition[0], pixelPosition[1] - 1]);
-                }
-            };
             this._redrawCanvas = function () {
                 this._canvasContext.putImageData(this._pixelField.pixelsData, 0, 0);
             };
         }
     </script>
-    <script>
+    <script about="interface">
         IMG_BUFFER_ID = 'img_buffer';
         CANVAS_ID = 'coloring_picture';
         CANVAS_IMAGE_PADDING = 3;
@@ -79,6 +104,7 @@
             var image = document.getElementById(IMG_BUFFER_ID);
             image.src = img_src;
         }
+
         function drawImageFromBuffer() {
             var c = document.getElementById(CANVAS_ID);
             var ctx = c.getContext("2d");
@@ -87,15 +113,21 @@
             c.width = img.width + 2 * CANVAS_IMAGE_PADDING;
             ctx.drawImage(img, CANVAS_IMAGE_PADDING, CANVAS_IMAGE_PADDING);
         }
+
         function loadImage() {
             loadImageToBuffer();
             drawImageFromBuffer();
         }
+
         function paintOverSmth() {
             var c = document.getElementById(CANVAS_ID);
             var ctx = c.getContext("2d");
+//            new AreaPainterOver([1, 1], c, [255, 0, 0, 255]).paintOver();
+            new AreaPainterOver([200, 200], c, [255, 0, 0, 255]).paintOver();
             new AreaPainterOver([100, 100], c, [255, 0, 0, 255]).paintOver();
-//            new AreaPainterOver([300, 300], c, [0, 255, 0, 255]).paintOver();
+            new AreaPainterOver([100, 100], c, [255, 255, 0, 255]).paintOver();
+            new AreaPainterOver([200, 100], c, [0, 255, 0, 255]).paintOver();
+            new AreaPainterOver([100, 400], c, [0, 0, 255, 255]).paintOver();
 //            new AreaPainterOver([700, 700], c, [0, 0, 255, 255]).paintOver();
         }
     </script>
